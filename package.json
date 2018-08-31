@@ -1,0 +1,27 @@
+{
+  "name": "aws-lambda-update-env",
+  "version": "0.0.1",
+  "description": "A tool that allows you to update environment variables of AWS lambda functions 'en masse'",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sashokbg/aws-lambda-update-env.git"
+  },
+  "keywords": [
+    "AWS",
+    "Lambda",
+    "Environment"
+  ],
+  "author": "Alexander KIRILOV",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sashokbg/aws-lambda-update-env/issues"
+  },
+  "homepage": "https://github.com/sashokbg/aws-lambda-update-env#readme",
+  "dependencies": {
+    "aws-sdk": "^2.306.0"
+  }
+}

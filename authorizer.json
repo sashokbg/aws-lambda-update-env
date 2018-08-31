@@ -1,0 +1,10 @@
+{
+    "id": "dmw3nf",
+    "name": "CognitoAutorizer",
+    "type": "COGNITO_USER_POOLS",
+    "providerARNs": [
+        "arn:aws:cognito-idp:us-east-1:862171756913:userpool/us-east-1_RrXCviYaS"
+    ],
+    "authType": "cognito_user_pools",
+    "identitySource": "method.request.header.Authorization"
+}
