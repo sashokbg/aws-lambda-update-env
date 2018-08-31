@@ -32,9 +32,8 @@ update_lambdas(){
 }
 
 prompt_user(){
-  set -x
-  FUNCTIONS=`aws cloudformation list-stack-resources --stack-name $STACK_NAME | grep -A1 -B3 AWS::Lambda::Function | grep -oP '(?<="PhysicalResourceId":\s")[a-zA-Z0-9_-]*'`
-  set +x
+  #FUNCTIONS=`aws cloudformation list-stack-resources --stack-name $STACK_NAME | grep -A1 -B3 AWS::Lambda::Function | grep -oP '(?<="PhysicalResourceId":\s")[a-zA-Z0-9_-]*'`
+  FUNCTIONS=`aws cloudformation list-stack-resources --stack-name $STACK_NAME | jq '.StackResourceSummaries[] | select(.ResourceType | contains("AWS::Lambda::Function")) | .PhysicalResourceId'`
   printf "Will update following functions: \n$FUNCTIONS\nUpdate ? Y/N" 
   read -n 1 -r
   echo
