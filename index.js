@@ -3,7 +3,6 @@ var colors = require('colors');
 
 const { parse_args } = require('./lib/argumentsParser.js'); 
 const AWS = require('aws-sdk');
-const { spawn } = require('child_process');
 
 var lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
 var cloudformation = new AWS.CloudFormation();
@@ -63,7 +62,6 @@ function find_lambdas(){
       if (err){
         console.log(err, err.stack);
         reject(err);
-        return;
       } else {
         let functions = data.StackResourceSummaries.filter(resource => resource.ResourceType==='AWS::Lambda::Function').map(funct => funct.PhysicalResourceId);
         resolve(functions);
