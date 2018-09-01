@@ -10,13 +10,11 @@ var cloudformation = new AWS.CloudFormation();
 function updatLambda(functionName, options){
 }
 
-function hasKey(functionName, key){
+function filterFunction(functionName, key){
   load_lambda_env(functionName)
     .then((data) => {
       if(data.functionEnv[options.key]){
-        console.log('UPDATING'.green+`: Function [${data.functionName}]`);
       } else {
-        console.log('SKIPPING'.yellow+`: Function [${data.functionName}] does not contain key [${options.key}].`);
       } 
     })
     .catch(err => {
@@ -24,17 +22,16 @@ function hasKey(functionName, key){
     });
 }
 
-function loadEnvironment(functionName){
-  console.log(`Loading function [${functionName}]`);
+function loadEnvironment(lambdaFunction){
+  console.log(`Loading function [${lambdaFunction.functionName}]`);
   return new Promise((resolve, reject) =>{
-    lambda.getFunctionConfiguration({FunctionName: functionName}, (err, data) =>{
+    lambda.getFunctionConfiguration({FunctionName: lambdaFunction.functionName}, (err, data) =>{
       if(err){
-        err.functionName = functionName;
+        err.functionName = lambdaFunction.functionName;
         reject(err);
       } else {
-        resolve({
-          functionName: functionName,
-          functionEnv: data.Environment.Variables});
+        lambdaFunction.functionEnv = data.Environment.Variables;
+        resolve(lambdaFunction);
         //let currentEnv = data.Environment;
         //currentEnv.Variables[key] = value;
         //lambda.updateFunctionConfiguration({FunctionName: func, Environment: currentEnv}, (err, data) =>{
@@ -58,19 +55,31 @@ function loadLambdas(options){
         console.log(err, err.stack);
         reject(err);
       } else {
-        let functions = data.StackResourceSummaries.filter(resource => resource.ResourceType==='AWS::Lambda::Function').map(funct => {functionName: funct.PhysicalResourceId});
-        functions.forEach(func => loadEnvironment())
-        conosle.dir(functions);
+        let functions = data.StackResourceSummaries.filter(resource => resource.ResourceType==='AWS::Lambda::Function').map(funct => {return {functionName: funct.PhysicalResourceId}});
+        console.dir(functions);
         resolve(functions);
       }
     });
   });
 }
 
+function loadEnvironments(functions){
+  return Promise.all(functions.map(loadEnvironment));
+}
+
+function filterFunctions(lambdas, key){
+  return Promise.resolve(lambdas.filter(lambda => {
+    if(lambda.functionEnv[key]){
+      console.log('UPDATING'.green+`: Function [${lambda.functionName}]`);
+      return true;
+    } 
+    console.log('SKIPPING'.yellow+`: Function [${lambda.functionName}] does not contain key [${options.key}].`);
+    return false;
+  }));
+}
+
 let options = parse_args();
-loadLambdas
-  .then((functions) => {
-    functions
-      .fitler(lambdaFunction => hasKey(lambdaFunction, options.key))
-      .forEach(lambdaFunction => updateLambda(lambdaFunction, options))
-  }).catch(err => console.error(err));
+loadLambdas(options)
+  .then((functions) => loadEnvironments(functions))
+  .then((loadedFunctions) => filterFunctions(loadedFunctions, options.key))
+  .then((data) => console.dir(data));
