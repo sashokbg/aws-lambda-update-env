@@ -7,28 +7,24 @@ const AWS = require('aws-sdk');
 var lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
 var cloudformation = new AWS.CloudFormation();
 
-
-function update_lambdas(functions, options){
-  console.log('Found the following functions to update:\n');
-  console.dir(functions);
-
-  for(functionName of functions){
-    load_lambda_env(functionName)
-      .then((data) => {
-        if(data.functionEnv[options.key]){
-          console.log('UPDATING'.green+`: Function [${data.functionName}]`);
-        } else {
-          console.log('SKIPPING'.yellow+`: Function [${data.functionName}] does not contain key [${options.key}].`);
-        } 
-      })
-      .catch(err => {
-        console.error(`Problem loading function configuration for [${err.functionName}]`,err);
-      });
-  }
-
+function updatLambda(functionName, options){
 }
 
-function load_lambda_env(functionName){
+function hasKey(functionName, key){
+  load_lambda_env(functionName)
+    .then((data) => {
+      if(data.functionEnv[options.key]){
+        console.log('UPDATING'.green+`: Function [${data.functionName}]`);
+      } else {
+        console.log('SKIPPING'.yellow+`: Function [${data.functionName}] does not contain key [${options.key}].`);
+      } 
+    })
+    .catch(err => {
+      console.error(`Problem loading function configuration for [${err.functionName}]`,err);
+    });
+}
+
+function loadEnvironment(functionName){
   console.log(`Loading function [${functionName}]`);
   return new Promise((resolve, reject) =>{
     lambda.getFunctionConfiguration({FunctionName: functionName}, (err, data) =>{
@@ -53,17 +49,18 @@ function load_lambda_env(functionName){
   });
 }
 
-function find_lambdas(){
-  console.log(`Updating Key [${this.key}] with new value [${this.value}] on Stack [${this.stack}]`);
-  let parent = this;
+function loadLambdas(options){
+  console.log(`Updating Key [${options.key}] with new value [${options.value}] on Stack [${options.stack}]`);
 
   return new Promise(function(resolve, reject){
-    cloudformation.listStackResources({StackName: parent.stack}, function(err, data) {
+    cloudformation.listStackResources({StackName: options.stack}, function(err, data) {
       if (err){
         console.log(err, err.stack);
         reject(err);
       } else {
-        let functions = data.StackResourceSummaries.filter(resource => resource.ResourceType==='AWS::Lambda::Function').map(funct => funct.PhysicalResourceId);
+        let functions = data.StackResourceSummaries.filter(resource => resource.ResourceType==='AWS::Lambda::Function').map(funct => {functionName: funct.PhysicalResourceId});
+        functions.forEach(func => loadEnvironment())
+        conosle.dir(functions);
         resolve(functions);
       }
     });
@@ -71,6 +68,9 @@ function find_lambdas(){
 }
 
 let options = parse_args();
-find_lambdas.call(options)
-  .then((functions)=>update_lambdas(functions, options))
-  .catch(err=> console.error(err));
+loadLambdas
+  .then((functions) => {
+    functions
+      .fitler(lambdaFunction => hasKey(lambdaFunction, options.key))
+      .forEach(lambdaFunction => updateLambda(lambdaFunction, options))
+  }).catch(err => console.error(err));
