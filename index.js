@@ -1,6 +1,6 @@
 process.env.AWS_SDK_LOAD_CONFIG=1;
 var colors = require('colors');
-
+const stdin = process.openStdin();
 const { parse_args } = require('./lib/argumentsParser.js'); 
 const AWS = require('aws-sdk');
 
@@ -41,7 +41,7 @@ function loadEnvironments(functions){
   return Promise.all(functions.map(loadEnvironment));
 }
 
-function filterLambdas(lambdas, key){
+function filterLambdas(lambdas, key=options.key){
   return Promise.resolve(lambdas.filter(lambda => {
     if(lambda.functionEnv[key]){
       console.log('UPDATING'.green+`: Function [${lambda.functionName}]`);
@@ -52,7 +52,7 @@ function filterLambdas(lambdas, key){
   }));
 }
 
-function updateLambdas(lambdas, options){
+function updateLambdas(lambdas){
   lambdas.forEach(lambda => {
     lambda.functionEnv[options.key] = options.value;
 
@@ -72,12 +72,29 @@ function updateLambdas(lambdas, options){
   });
 }
 
+function promptUser(lambdas){
+  console.log('Is this OK ? (Y/y)');
+
+   return new Promise((resolve, reject) => {
+    stdin.addListener("data", function(input) {
+      if(input.toString().trim().toUpperCase() === 'Y'){
+        resolve(lambdas);
+      }
+      else{
+        reject('Process aborted by user');
+      }
+    }); 
+  });
+}
+
 
 let options = parse_args();
 loadLambdas(options)
   .then(loadEnvironments)
-  .then(loadedLambdas => filterLambdas(loadedLambdas, options.key))
-  .then(lambdas => updateLambdas(lambdas, options));
+  .then(filterLambdas)
+  .then(promptUser)
+  .then(updateLambdas)
+  .catch((err) => console.log(err)); 
 
 
 
