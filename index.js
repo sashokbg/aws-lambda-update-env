@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const { filterLambdas, updateLambdas, loadLambdas, loadEnvironments} = require('./lib/lambdaUpdater.js');
 const { parse_args, promptUser } = require('./lib/argumentsParser.js'); 
 
