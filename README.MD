@@ -19,6 +19,14 @@ You need to configure your AWS credentials in *~/.aws/credentials* and your regi
 
 More on that here : https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
 
+## Installation
+
+Using NPM
+
+```
+npm install -g aws-lambda-update-env
+```
+
 ## Usage
 
 ```
